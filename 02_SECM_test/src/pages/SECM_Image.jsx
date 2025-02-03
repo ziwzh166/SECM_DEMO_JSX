@@ -2,7 +2,213 @@ import React, { useState, useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import TOPOLOGY from 'vanta/dist/vanta.topology.min';
 import p5 from 'p5';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+const ElectrodeViewer = () => {
+  const mountRef = useRef(null);
 
+  useEffect(() => {
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, 400 / 200, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(600, 300);
+    renderer.setClearColor(0x1a1a1a);
+    mountRef.current.appendChild(renderer.domElement);
+
+    // Enhanced lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(5, 5, 5);
+    scene.add(ambientLight, directionalLight);
+
+    // Replace plate with circular catalyst
+    const catalystRadius = 5;
+    const circleGeometry = new THREE.CircleGeometry(catalystRadius, 64);
+    const catalystMaterial = new THREE.MeshStandardMaterial({
+      color: 0xFFFFFF,
+      emissiveIntensity: 0.3,
+      transparent: true,
+      opacity: 0.65,
+      side: THREE.DoubleSide
+    });
+    const catalyst = new THREE.Mesh(circleGeometry, catalystMaterial);
+    catalyst.rotation.x = -Math.PI / 2;
+    scene.add(catalyst);
+
+    // Blue reactant particles with constrained positions
+    const particles = new THREE.Group();
+    const particleGeometry = new THREE.SphereGeometry(0.08, 8, 8);
+    const particleMaterial = new THREE.MeshStandardMaterial({
+      color: 0x4287f5,
+      emissive: 0x4287f5,
+      emissiveIntensity: 0.3,
+      transparent: true,
+      opacity: 0.8
+    });
+
+    for (let i = 0; i < 30; i++) {
+      const particle = new THREE.Mesh(particleGeometry, particleMaterial);
+      // Generate random angle and radius for circular distribution
+      const angle = Math.random() * Math.PI * 2;
+      const radius = Math.random() * catalystRadius;
+      particle.position.set(
+        radius * Math.cos(angle),
+        Math.random() * 0.3,
+        radius * Math.sin(angle)
+      );
+      particle.userData = {
+        velocity: Math.random() * 0.01 + 0.005,
+        offset: Math.random() * Math.PI * 2,
+        angle: angle,
+        radius: radius
+      };
+      particles.add(particle);
+    }
+
+    // Smaller gold electrode
+    const coneGeometry = new THREE.ConeGeometry(0.3, 1.5, 32);
+    const coneMaterial = new THREE.MeshStandardMaterial({
+      color: 0xFFD700,
+      roughness: 0.1,           // Decreased roughness
+      metalness: 1.0,           // Increased metalness
+      emissive: 0xFFD700,      // Added emissive glow
+      emissiveIntensity: 0.2   // Subtle emissive effect
+    });
+    const cone = new THREE.Mesh(coneGeometry, coneMaterial);
+    cone.position.y = 2;
+    cone.rotation.x = Math.PI;
+    scene.add(cone);
+
+    // Blue reactant particles
+    // const particles = new THREE.Group();
+    // const particleGeometry = new THREE.SphereGeometry(0.08, 8, 8);
+    // const particleMaterial = new THREE.MeshStandardMaterial({
+    //   color: 0x4287f5,
+    //   emissive: 0x4287f5,
+    //   emissiveIntensity: 0.3,
+    //   transparent: true,
+    //   opacity: 0.8
+    // });
+
+    // Modify particle creation with lifetime and velocity
+    // First, add console logs in particle creation
+    for (let i = 0; i < 30; i++) {
+      const particle = new THREE.Mesh(particleGeometry, particleMaterial.clone()); // Clone material
+      const angle = Math.random() * Math.PI * 2;
+      const radius = Math.random() * catalystRadius;
+
+      particle.position.set(
+        radius * Math.cos(angle),
+        Math.random() * 0.3,
+        radius * Math.sin(angle)
+      );
+
+      console.log('Initial position:', particle.position);
+
+      particle.userData = {
+        velocity: {
+          x: (Math.random() - 0.5) * 0.1,  // Increased velocity
+          y: Math.random() * 0.05 + 0.02,   // Increased velocity
+          z: (Math.random() - 0.5) * 0.1    // Increased velocity
+        },
+        lifetime: 0,
+        maxLifetime: 100
+      };
+
+      console.log('Velocity:', particle.userData.velocity);
+      particles.add(particle);
+    }
+    scene.add(particles);
+
+    camera.position.set(6, 4, 6);
+    camera.lookAt(0, 0, 0);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+
+    const animate = () => {
+      requestAnimationFrame(animate);
+
+      particles.children.forEach((particle, index) => {
+        if (!particle.userData.velocity) {
+          console.error('Missing velocity for particle:', index);
+          return;
+        }
+
+        particle.position.x += particle.userData.velocity.x;
+        particle.position.y += particle.userData.velocity.y;
+        particle.position.z += particle.userData.velocity.z;
+
+        particle.userData.lifetime++;
+
+        if (particle.userData.lifetime >= particle.userData.maxLifetime) {
+          particles.remove(particle);
+          // Create new particle to replace removed one
+          createNewParticle();
+        }
+      });
+
+      controls.update();
+      renderer.render(scene, camera);
+    };
+    // Helper function to create new particles
+    const createNewParticle = () => {
+      const particle = new THREE.Mesh(particleGeometry, particleMaterial.clone());
+      const angle = Math.random() * Math.PI * 2;
+      const radius = Math.random() * catalystRadius;
+
+      particle.position.set(
+        radius * Math.cos(angle),
+        0,
+        radius * Math.sin(angle)
+      );
+
+      particle.userData = {
+        velocity: {
+          x: (Math.random() - 0.5) * 0.1,
+          y: Math.random() * 0.05 + 0.02,
+          z: (Math.random() - 0.5) * 0.1
+        },
+        lifetime: 0,
+        maxLifetime: 100
+      };
+
+      particles.add(particle);
+    };
+    animate();
+
+    return () => {
+      mountRef.current.removeChild(renderer.domElement);
+    };
+  }, []);
+
+  return (
+    <div className="relative flex items-start">
+      <div className="bg-gray-800 p-4 rounded-lg mr-4 w-48">
+        <h3 className="text-white text-sm font-semibold mb-3">Legend</h3>
+        <div className="space-y-2">
+          <div className="flex items-center">
+            <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: '#FFD700' }}></div>
+            <span className="text-white text-s ml-2">Detection Electrode</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: '#808080' }}></div>
+            <span className="text-white text-s ml-2">Catalytic Layer</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: '#4287f5' }}></div>
+            <span className="text-white text-s ml-2">Catalytic Products</span>
+          </div>
+        </div>
+      </div>
+      <div
+        ref={mountRef}
+        className="bg-gray-900 rounded-lg"
+        style={{ width: 600, height: 300 }}
+      />
+    </div>
+  );
+};
 const CombinedVisualizer = () => {
   const electrodeXRef = useRef(0);
   const electrodeYRef = useRef(0);
@@ -55,17 +261,17 @@ const CombinedVisualizer = () => {
       ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
       ctx3.clearRect(0, 0, canvas3.width, canvas3.height);
       // Don't clear ctx4 to maintain persistence
-    
+
       const centerX = canvas1.width / 2;
       const centerY = canvas1.height / 2;
       const circleRadius = 50;
-    
+
       // Draw catalyst circle in figure 1
       ctx1.beginPath();
       ctx1.arc(centerX, centerY, circleRadius, 0, Math.PI * 2);
       ctx1.fillStyle = 'rgba(255, 255, 255, 0.5)';
       ctx1.fill();
-    
+
       // Generate particles for figure 1
       if (Math.random() < 0.5) {
         const angle = Math.random() * Math.PI * 2;
@@ -77,31 +283,54 @@ const CombinedVisualizer = () => {
           Math.sin(angle) * speed
         ));
       }
-    
+
       // Update and draw particles in figure 1
       particlesRef1.current = particlesRef1.current.filter(particle => {
+        // Add random diffusion
+        particle.vx += (Math.random() - 0.5) * 0.1;
+        particle.vy += (Math.random() - 0.5) * 0.1;
+
+        // Update position
         particle.x += particle.vx;
         particle.y += particle.vy;
-        
+
+        // Calculate distance from center
         const distanceFromCenter = calculateDistance(particle.x, particle.y, centerX, centerY);
         const maxDistance = circleRadius * 3;
-        
+
+        // Fade out based on distance
         particle.alpha *= distanceFromCenter > maxDistance ? 0.97 : particle.distanceDecay;
-    
-        const dx = centerX - particle.x;
-        const dy = centerY - particle.y;
-        const attraction = 0.005;
-        particle.vx += dx * attraction;
-        particle.vy += dy * attraction;
-    
+
+        // Limit maximum velocity
+        const maxVelocity = 2;
+        const currentVelocity = Math.sqrt(particle.vx * particle.vx + particle.vy * particle.vy);
+        if (currentVelocity > maxVelocity) {
+          particle.vx = (particle.vx / currentVelocity) * maxVelocity;
+          particle.vy = (particle.vy / currentVelocity) * maxVelocity;
+        }
+
+        // Weak attraction to center only when far away
+        if (distanceFromCenter > circleRadius * 2) {
+          const dx = centerX - particle.x;
+          const dy = centerY - particle.y;
+          const attraction = 0.001; // Reduced attraction strength
+          particle.vx += dx * attraction;
+          particle.vy += dy * attraction;
+        }
+
+        // Add drag force
+        particle.vx *= 0.99;
+        particle.vy *= 0.99;
+
+        // Draw particle
         ctx1.beginPath();
         ctx1.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
         ctx1.fillStyle = `rgba(100, 200, 255, ${particle.alpha})`;
         ctx1.fill();
-    
+
         return particle.alpha > 0.01;
       });
-    
+
       // Update electrode position
       electrodeXRef.current += 2;
       if (electrodeXRef.current >= canvas1.width) {
@@ -113,46 +342,46 @@ const CombinedVisualizer = () => {
         }
         signalDataRef.current = [];
       }
-    
+
       // Draw electrodes
       const electrodeWidth = 60;
       const electrodeHeight = 10;
       const electrodeY = canvas2.height - 40;
-    
+
       // Draw electrode in figure 1
       ctx1.beginPath();
       ctx1.rect(electrodeXRef.current - electrodeWidth / 2, electrodeYRef.current, electrodeWidth, electrodeHeight);
       ctx1.fillStyle = '#FFD700';
       ctx1.fill();
-    
+
       // Draw electrode in figure 2
       ctx2.beginPath();
       ctx2.rect(electrodeXRef.current - electrodeWidth / 2, electrodeY, electrodeWidth, electrodeHeight);
       ctx2.fillStyle = '#FFD700';
       ctx2.fill();
-    
+
       // Calculate and draw catalyst in figure 2
       const catalystWidth = calculateCatalystWidth(electrodeYRef.current, centerY, circleRadius);
       const catalystLayerHeight = 5;
-    
+
       ctx2.beginPath();
       ctx2.rect(centerX - catalystWidth / 2, canvas2.height - catalystLayerHeight, catalystWidth, catalystLayerHeight);
       ctx2.fillStyle = 'rgba(255, 255, 255, 0.5)';
       ctx2.fill();
-    
+
       // Generate evenly distributed particles in figure 2
       const now = Date.now();
       const particleInterval = 50;
-      
+
       if (now - lastParticleTimeRef.current > particleInterval && catalystWidth > 1) {
         lastParticleTimeRef.current = now;
         const numParticles = Math.max(1, Math.floor(catalystWidth / 20));
-        
+
         for (let i = 0; i < numParticles; i++) {
           const position = i / (numParticles - 1 || 1);
           const x = centerX - (catalystWidth / 2) + (catalystWidth * position);
           const randomOffset = (Math.random() - 0.5) * 4;
-          
+
           particlesRef2.current.push(createParticle(
             x + randomOffset,
             canvas2.height - catalystLayerHeight,
@@ -161,41 +390,41 @@ const CombinedVisualizer = () => {
           ));
         }
       }
-    
+
       // Update particles and check collisions in figure 2
       let collisionCount = 0;
       particlesRef2.current = particlesRef2.current.filter((p) => {
         p.x += p.vx;
         p.y += p.vy;
-    
-        if (!p.hasCollided && 
-            p.y <= electrodeY + electrodeHeight &&
-            p.x >= electrodeXRef.current - electrodeWidth / 2 &&
-            p.x <= electrodeXRef.current + electrodeWidth / 2) {
+
+        if (!p.hasCollided &&
+          p.y <= electrodeY + electrodeHeight &&
+          p.x >= electrodeXRef.current - electrodeWidth / 2 &&
+          p.x <= electrodeXRef.current + electrodeWidth / 2) {
           collisionCount += 15;
           return false;
         }
-    
+
         ctx2.beginPath();
         ctx2.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
         ctx2.fillStyle = '#4169E1';
         ctx2.fill();
-    
+
         return p.y + p.radius > 0;
       });
-    
+
       // Process signal with faster decay
       if (collisionCount > 0) {
         signalDecayRef.current = Math.min(200, signalDecayRef.current + collisionCount);
       } else {
         signalDecayRef.current = Math.max(0, signalDecayRef.current - 10);
       }
-    
+
       // Draw real-time signal indicator
       const signalHeight = (signalDecayRef.current / 200) * 150;
       ctx2.fillStyle = '#32CD32';
       ctx2.fillRect(canvas2.width - 40, canvas2.height - signalHeight, 20, signalHeight);
-    
+
       // Store signal data
       if (signalDecayRef.current > 0) {
         const dataPoint = {
@@ -206,7 +435,7 @@ const CombinedVisualizer = () => {
         signalDataRef.current.push(dataPoint);
         imageDataRef.current.push(dataPoint);
       }
-    
+
       // Draw signal plot axes
       ctx3.strokeStyle = 'white';
       ctx3.beginPath();
@@ -215,7 +444,7 @@ const CombinedVisualizer = () => {
       ctx3.moveTo(50, canvas3.height - 30);
       ctx3.lineTo(50, 30);
       ctx3.stroke();
-    
+
       // Plot current line data
       if (signalDataRef.current.length > 0) {
         ctx3.beginPath();
@@ -228,7 +457,7 @@ const CombinedVisualizer = () => {
         });
         ctx3.stroke();
       }
-    
+
       // Update 2D image with enhanced contrast
       const imageData = ctx4.createImageData(canvas4.width, canvas4.height);
       imageDataRef.current.forEach(point => {
@@ -242,7 +471,7 @@ const CombinedVisualizer = () => {
         imageData.data[index + 3] = 255;
       });
       ctx4.putImageData(imageData, 0, 0);
-    
+
       animationFrameRef.current = requestAnimationFrame(animate);
     };
 
@@ -347,30 +576,63 @@ const Echem = () => {
       <div className="relative z-10 max-w-4xl mx-auto px-4 py-16 min-h-screen">
         <div className="bg-white bg-opacity-10 backdrop-blur-md rounded-xl p-6 space-y-12 mb-20">
           <h1 className="text-4xl font-bold text-white text-center mb-8">
-            Electrochemistry
+            Combined them all: SECM
           </h1>
-
+          <div className="mb-8">
+            <h3 className="text-xl font-semibold mb-4 text-white" >3D View Orientation</h3>
+            <ElectrodeViewer />
+          </div>
           {/* Introduction Section */}
-          <div className="text-white space-y-4">
+          {/* <div className="text-white space-y-4">
             <h2 className="text-2xl font-semibold mb-4">Electrochemical Sensors</h2>
             <p className="text-lg">
               Most modern sensors rely on electrochemical principles. When chemicals react at an electrode surface,
               they produce measurable electrical signals that are proportional to their concentration.
             </p>
-          </div>
+          </div> */}
 
           {/* Combined Visualizer Section */}
           <div className="text-white space-y-4">
             <h2 className="text-2xl font-semibold mb-4">Combined Visualizer</h2>
             <CombinedVisualizer />
-            <p className="text-lg mt-4">
-              The relationship between chemical concentration and signal is often linear:
-            </p>
-            <ul className="list-disc list-inside ml-4 space-y-2">
-              <li>Higher concentration → Stronger signal</li>
-              <li>Lower concentration → Weaker signal</li>
-              <li>Zero concentration → Background signal</li>
-            </ul>
+            <div className="text-lg mt-4 space-y-4">
+              <h3 className="font-bold">SECM Signal Generation Logic:</h3>
+
+              <div className="space-y-2">
+                <h4 className="font-semibold">1. Electrode Movement:</h4>
+                <ul className="list-disc pl-6">
+                  <li>Electrode scans across surface in raster pattern</li>
+                  <li>Movement: left to right, top to bottom</li>
+                </ul>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="font-semibold">2. Catalytic Interaction:</h4>
+                <ul className="list-disc pl-6">
+                  <li>Higher product concentration above catalytic surface</li>
+                  <li>Products detected when electrode passes over active areas</li>
+                </ul>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="font-semibold">3. Signal Generation:</h4>
+                <ul className="list-disc pl-6">
+                  <li>Signal amplitude proportional to local product concentration</li>
+                  <li>Longer exposure to catalytic area = extended high-signal region</li>
+                  <li>Creates characteristic 2D signal map showing catalytic activity</li>
+                </ul>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="font-semibold">4. Resolution Factors:</h4>
+                <ul className="list-disc pl-6">
+                  <li>Electrode scan rate affects signal resolution</li>
+                  <li>Distance from surface influences signal strength</li>
+                  <li>Product diffusion impacts spatial resolution</li>
+                </ul>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>

@@ -199,7 +199,7 @@ const Echem = () => {
 
           {/* Introduction Section */}
           <div className="text-white space-y-4">
-            <h2 className="text-2xl font-semibold mb-4">Electrochemical Sensors</h2>
+            <h2 className="text-2xl font-semibold mb-4">Electrochemical Detection </h2>
             <p className="text-lg">
               Most modern sensors rely on electrochemical principles. When chemicals react at an electrode surface,
               they produce measurable electrical signals that are proportional to their concentration.
