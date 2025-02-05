@@ -1,0 +1,23 @@
+# LaTeX temporary files
+*.aux
+*.log
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.bbl
+*.blg
+*.out
+*.toc
+*.nav
+*.snm
+*.vrb
+
+# LaTeX build directory
+_build/
+
+# LaTeX output files (uncomment if you don't want to track PDFs)
+# *.pdf
+
+# LaTeX editor temporary files
+*.bak
+*~

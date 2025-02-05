@@ -7,6 +7,7 @@ const ElectrodeViewer = () => {
   const mountRef = useRef(null);
 
   useEffect(() => {
+    // Main scene setup
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, 400 / 200, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -14,17 +15,17 @@ const ElectrodeViewer = () => {
     renderer.setClearColor(0x1a1a1a);
     mountRef.current.appendChild(renderer.domElement);
 
-    // Enhanced lighting
+    // Lighting
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
     directionalLight.position.set(5, 5, 5);
     scene.add(ambientLight, directionalLight);
 
-    // Replace plate with circular catalyst
+    // Circular catalyst
     const catalystRadius = 5;
     const circleGeometry = new THREE.CircleGeometry(catalystRadius, 64);
     const catalystMaterial = new THREE.MeshStandardMaterial({
-      color: 0xFFFFFF,
+      color: 0xffffff,
       emissiveIntensity: 0.3,
       transparent: true,
       opacity: 0.65,
@@ -34,9 +35,11 @@ const ElectrodeViewer = () => {
     catalyst.rotation.x = -Math.PI / 2;
     scene.add(catalyst);
 
-    // Blue reactant particles with constrained positions
+    // Particles setup
     const particles = new THREE.Group();
-    const particleGeometry = new THREE.SphereGeometry(0.08, 8, 8);
+    scene.add(particles);
+
+    const particleGeometry = new THREE.SphereGeometry(0.1, 16, 16);
     const particleMaterial = new THREE.MeshStandardMaterial({
       color: 0x4287f5,
       emissive: 0x4287f5,
@@ -45,140 +48,148 @@ const ElectrodeViewer = () => {
       opacity: 0.8
     });
 
+    // Create particles with upward velocity
     for (let i = 0; i < 30; i++) {
-      const particle = new THREE.Mesh(particleGeometry, particleMaterial);
-      // Generate random angle and radius for circular distribution
-      const angle = Math.random() * Math.PI * 2;
-      const radius = Math.random() * catalystRadius;
+      const particle = new THREE.Mesh(particleGeometry, particleMaterial.clone());
+
+      // Random XZ position
       particle.position.set(
-        radius * Math.cos(angle),
-        Math.random() * 0.3,
-        radius * Math.sin(angle)
+        (Math.random() - 0.5) * 8,
+        0,
+        (Math.random() - 0.5) * 8
       );
+
+      // Give each particle an upward velocity
       particle.userData = {
-        velocity: Math.random() * 0.01 + 0.005,
-        offset: Math.random() * Math.PI * 2,
-        angle: angle,
-        radius: radius
+        velocity: new THREE.Vector3(
+          0,
+          Math.random() * 0.02 + 0.01,
+          0
+        )
       };
+
       particles.add(particle);
     }
+    function createParticle(geometry, material) {
+      const particle = new THREE.Mesh(geometry, material.clone());
+      particle.position.set(
+        (Math.random() - 0.5) * 8,
+        0,
+        (Math.random() - 0.5) * 8
+      );
+      particle.userData = {
+        velocity: new THREE.Vector3(0, Math.random() * 0.02 + 0.01, 0),
+      };
+      return particle;
+    }
 
-    // Smaller gold electrode
+    // Gold electrode
     const coneGeometry = new THREE.ConeGeometry(0.3, 1.5, 32);
     const coneMaterial = new THREE.MeshStandardMaterial({
       color: 0xFFD700,
-      roughness: 0.1,           // Decreased roughness
-      metalness: 1.0,           // Increased metalness
-      emissive: 0xFFD700,      // Added emissive glow
-      emissiveIntensity: 0.2   // Subtle emissive effect
+      roughness: 0.1,
+      metalness: 1.0,
+      emissive: 0xFFD700,
+      emissiveIntensity: 0.2
     });
     const cone = new THREE.Mesh(coneGeometry, coneMaterial);
     cone.position.y = 2;
     cone.rotation.x = Math.PI;
     scene.add(cone);
 
-    // Blue reactant particles
-    // const particles = new THREE.Group();
-    // const particleGeometry = new THREE.SphereGeometry(0.08, 8, 8);
-    // const particleMaterial = new THREE.MeshStandardMaterial({
-    //   color: 0x4287f5,
-    //   emissive: 0x4287f5,
-    //   emissiveIntensity: 0.3,
-    //   transparent: true,
-    //   opacity: 0.8
-    // });
-
-    // Modify particle creation with lifetime and velocity
-    // First, add console logs in particle creation
-    for (let i = 0; i < 30; i++) {
-      const particle = new THREE.Mesh(particleGeometry, particleMaterial.clone()); // Clone material
-      const angle = Math.random() * Math.PI * 2;
-      const radius = Math.random() * catalystRadius;
-
-      particle.position.set(
-        radius * Math.cos(angle),
-        Math.random() * 0.3,
-        radius * Math.sin(angle)
-      );
-
-      console.log('Initial position:', particle.position);
-
-      particle.userData = {
-        velocity: {
-          x: (Math.random() - 0.5) * 0.1,  // Increased velocity
-          y: Math.random() * 0.05 + 0.02,   // Increased velocity
-          z: (Math.random() - 0.5) * 0.1    // Increased velocity
-        },
-        lifetime: 0,
-        maxLifetime: 100
-      };
-
-      console.log('Velocity:', particle.userData.velocity);
-      particles.add(particle);
-    }
-    scene.add(particles);
-
     camera.position.set(6, 4, 6);
     camera.lookAt(0, 0, 0);
 
+    // Orbit controls
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
 
+    // Corner axes
+    // Create a helper to generate sprite labels
+    function makeAxisLabel(text, color = '#ffffff') {
+      const size = 64;
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = color;
+      ctx.font = 'bold 64px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, size / 2, size / 2);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      const spriteMaterial = new THREE.SpriteMaterial({ map: texture, transparent: false });
+      const sprite = new THREE.Sprite(spriteMaterial);
+      sprite.scale.set(0.5, 0.5, 0.5); // Adjust label size
+      return sprite;
+    }
+    const axesScene = new THREE.Scene();
+    const axesHelper = new THREE.AxesHelper(2);
+    axesHelper.scale.set(0.5, 0.5, 0.5);
+    // Add the labels after creating axesHelper in the axesScene
+    const xLabel = makeAxisLabel('X', '#ff0000');
+
+
+    const yLabel = makeAxisLabel('Y', '#00ff00');
+
+
+    const zLabel = makeAxisLabel('Z', '#0000ff');
+    xLabel.position.set(0, 0, 1.2);
+    yLabel.position.set(1.2, 0, 0);
+    zLabel.position.set(0, 1.2, 0);
+    axesScene.add(axesHelper);
+    axesScene.add(xLabel, yLabel, zLabel);
+
+    const axesCamera = new THREE.PerspectiveCamera(50, 1, 0.1, 1000);
+    axesCamera.position.set(4, 4, 4);
+
+    const axesRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    axesRenderer.setSize(150, 150);
+    axesRenderer.setClearColor(0x000000, 0);
+    axesRenderer.domElement.style.position = 'absolute';
+    axesRenderer.domElement.style.top = '20px';
+    axesRenderer.domElement.style.right = '20px';
+    mountRef.current.appendChild(axesRenderer.domElement);
+
+    // Animation
     const animate = () => {
       requestAnimationFrame(animate);
-
-      particles.children.forEach((particle, index) => {
-        if (!particle.userData.velocity) {
-          console.error('Missing velocity for particle:', index);
-          return;
-        }
-
-        particle.position.x += particle.userData.velocity.x;
-        particle.position.y += particle.userData.velocity.y;
-        particle.position.z += particle.userData.velocity.z;
-
-        particle.userData.lifetime++;
-
-        if (particle.userData.lifetime >= particle.userData.maxLifetime) {
-          particles.remove(particle);
-          // Create new particle to replace removed one
-          createNewParticle();
-        }
+      // Randomly create new particles
+      if (Math.random() < 0.1) {
+        particles.add(createParticle(particleGeometry, particleMaterial));
+      }
+      // Update existing particles, remove the ones that go too high
+      particles.children.forEach((particle) => {
+        particle.position.add(particle.userData.velocity);
       });
-
-      controls.update();
-      renderer.render(scene, camera);
-    };
-    // Helper function to create new particles
-    const createNewParticle = () => {
-      const particle = new THREE.Mesh(particleGeometry, particleMaterial.clone());
-      const angle = Math.random() * Math.PI * 2;
-      const radius = Math.random() * catalystRadius;
-
-      particle.position.set(
-        radius * Math.cos(angle),
-        0,
-        radius * Math.sin(angle)
+      particles.children = particles.children.filter(
+        (p) => p.position.y < 10 // remove if it moves above y=10
       );
 
-      particle.userData = {
-        velocity: {
-          x: (Math.random() - 0.5) * 0.1,
-          y: Math.random() * 0.05 + 0.02,
-          z: (Math.random() - 0.5) * 0.1
-        },
-        lifetime: 0,
-        maxLifetime: 100
-      };
+      // Let OrbitControls update the main camera
+      controls.update();
 
-      particles.add(particle);
+      // Render main scene
+      renderer.render(scene, camera);
+
+      // Sync axes camera with main camera
+      axesCamera.position.copy(camera.position).normalize().multiplyScalar(4);
+      axesCamera.quaternion.copy(camera.quaternion);
+      axesCamera.updateProjectionMatrix();
+
+      // Render axes scene
+      axesRenderer.render(axesScene, axesCamera);
     };
+
     animate();
 
+    // Clean up
     return () => {
       mountRef.current.removeChild(renderer.domElement);
+      mountRef.current.removeChild(axesRenderer.domElement);
     };
   }, []);
 
