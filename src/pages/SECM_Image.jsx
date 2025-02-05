@@ -386,19 +386,26 @@ const CombinedVisualizer = () => {
 
       if (now - lastParticleTimeRef.current > particleInterval && catalystWidth > 1) {
         lastParticleTimeRef.current = now;
-        const numParticles = Math.max(1, Math.floor(catalystWidth / 20));
+
+        // Scale number of particles with catalyst width
+        const numParticles = Math.max(1, Math.floor(catalystWidth / 10)); // More particles for wider catalyst
+
+        // Catalyst dimensions
+        const catalystLeft = centerX - catalystWidth / 2;
+        const catalystRight = centerX + catalystWidth / 2;
+        const catalystTop = canvas2.height - catalystLayerHeight;
+        const catalystBottom = canvas2.height;
 
         for (let i = 0; i < numParticles; i++) {
-          const position = i / (numParticles - 1 || 1);
-          const x = centerX - (catalystWidth / 2) + (catalystWidth * position);
-          const randomOffset = (Math.random() - 0.5) * 4;
+          // Random position within catalyst area
+          const x = catalystLeft + Math.random() * catalystWidth;
+          const y = catalystTop + Math.random() * catalystLayerHeight;
 
-          particlesRef2.current.push(createParticle(
-            x + randomOffset,
-            canvas2.height - catalystLayerHeight,
-            (Math.random() - 0.5) * 2,
-            -Math.random() * 4 - 2
-          ));
+          // Velocity pointing upward with some spread
+          const vx = (Math.random() - 0.5) * 2;
+          const vy = -Math.random() * 4 - 2;
+
+          particlesRef2.current.push(createParticle(x, y, vx, vy));
         }
       }
 
@@ -642,6 +649,33 @@ const Echem = () => {
                   <li>Product diffusion impacts spatial resolution</li>
                 </ul>
               </div>
+              {/* Add new Learn More section */}
+              <div className="space-y-2 mt-6">
+                <h4 className="font-semibold">Learn More:</h4>
+                <ul className="list-disc pl-6">
+                  <li>
+                    <a
+                      href="https://www.chinstruments.com/chi900.shtml"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 hover:text-blue-300 underline"
+                    >
+                      Commercial SECM Instrument Details
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="https://pubs.acs.org/doi/10.1021/acs.chemrev.6b00067"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 hover:text-blue-300 underline"
+                    >
+                      Comprehensive SECM Review Article
+                    </a>
+                  </li>
+                </ul>
+              </div>
+
             </div>
 
           </div>
