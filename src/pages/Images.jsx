@@ -147,7 +147,7 @@ const Images = () => {
                 alt="SEM Working Principle"
                 className="max-w-md rounded-lg shadow-lg border-2 border-white border-opacity-20"
               />
-              <p className="mt-2 text-sm text-gray-600">
+              <p className="mt-2 text-sm text-white">
                 Image source: <a href="https://murry-gans.blogspot.com/2012/08/a-lone-drone-bee.html" target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">Murry Gans Blog</a>
               </p>
             </div>
