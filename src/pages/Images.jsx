@@ -9,11 +9,26 @@ const Images = () => {
   const resizeTimeoutRef = useRef(null); // Add this line
   useEffect(() => {
     let effect = null;
+  const initVanta = async () => {
+    if (!vantaRef.current) return;
 
-    const initVanta = () => {
-      if (!vantaRef.current || !THREE) return;
-
-      try {
+    // Explicitly load THREE.js
+    const THREE = await import('three');
+    window.THREE = THREE.default || THREE;
+    try {
+      effect = TOPOLOGY({
+        el: vantaRef.current,
+        p5: p5,
+        mouseControls: true,
+        touchControls: true,
+        gyroControls: false,
+        minHeight: window.innerHeight,
+        minWidth: window.innerWidth,
+        scale: 1.00,
+        scaleMobile: 1.00,
+        color: 0x526681,
+        backgroundColor: 0x091149
+      });
         effect = TOPOLOGY({
           el: vantaRef.current,
           p5: p5,
