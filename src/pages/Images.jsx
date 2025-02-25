@@ -79,8 +79,6 @@ const Images = () => {
   // Initialize matrix with circle pattern
   const [matrix, setMatrix] = useState(createCircleMatrix());
 
-  const canvasRef = useRef(null);
-
   // Update canvas when matrix changes
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -101,7 +99,6 @@ const Images = () => {
     ctx.putImageData(imageData, 0, 0);
   }, [matrix]);
 
-  // Handle matrix value changes
   const handleValueChange = (row, col, value) => {
     const newMatrix = [...matrix];
     newMatrix[row][col] = Math.max(0, Math.min(255, parseInt(value) || 0));
