@@ -126,8 +126,12 @@ const Images = () => {
             <h1 className="text-4xl font-bold text-white text-center mb-8">
               What is an Image?
             </h1>
-
+            
             <div className="bg-white bg-opacity-10 backdrop-blur-md rounded-xl p-6">
+            <p className="text-white text-lg leading-relaxed">
+                An image is fundamentally a visual representation that <span className="font-bold">captures and conveys information</span>.
+                In the scientific context, images serve as data rather than mere illustrations.
+              </p>
               {/* Matrix & Canvas */}
               <div className="flex gap-8 justify-center items-start mt-8 mb-8">
                 <div className="grid grid-cols-8 gap-1">
