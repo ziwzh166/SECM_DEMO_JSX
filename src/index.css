@@ -181,32 +181,3 @@ body:has(.card[data-color="green"]:hover) {
   box-shadow: 0.6vmin 0.6vmin #fff, 1vmin 1vmin #d2e4ff, 1vmin 1vmin #d2e4ff,
     0.65vmin 1vmin #d2e4ff, 1vmin 0.65vmin #d2e4ff;
 }
-/* Reset default browser styles */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-/* Ensure full viewport coverage */
-html, body, #root {
-  width: 100%;
-  height: 100%;
-  overflow-x: hidden;
-}
-
-/* Vanta.js canvas styling */
-canvas {
-  display: block;
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: -1;
-  width: 100vw !important;
-  height: 100vh !important;
-}
-
-/* Optional: Add smooth scrolling */
-html {
-  scroll-behavior: smooth;
-}
