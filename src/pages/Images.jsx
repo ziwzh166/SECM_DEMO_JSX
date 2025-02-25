@@ -8,30 +8,40 @@ const Images = () => {
   const vantaRef = useRef(null);
 
   useEffect(() => {
-    // Wait for VANTA and p5 dependencies
-    const loadVanta = async () => {
+    let effect = null;
+
+    const initVanta = async () => {
+      if (!vantaRef.current || !THREE) return;
+
       try {
-        if (!vantaRef.current || vantaEffect) return;
-        
-        const effect = TOPOLOGY({
+        effect = TOPOLOGY({
           el: vantaRef.current,
-          p5,
+          p5: p5,
           mouseControls: true,
           touchControls: true,
           gyroControls: false,
           minHeight: window.innerHeight,
           minWidth: window.innerWidth,
-          scale: 1.0,
+          scale: 1.00,
+          scaleMobile: 1.00,
           color: 0x526681,
           backgroundColor: 0x091149
-        });
+        })
 
         setVantaEffect(effect);
-      } catch {}
+      } catch (error) {
+        console.error('Failed to initialize Vanta effect:', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
+
     initVanta();
+
     return () => {
-      if (effect) effect.destroy();
+      if (effect) {
+        effect.destroy();
+      }
     };
   }, []);
 
@@ -86,12 +96,8 @@ const Images = () => {
   };
 
   return (
-    <div 
-      ref={vantaRef} 
-      className=" inset-0 w-full min-h-screen overflow-auto"
-    >
-      
-      <div className="relative z-10 max-w-4xl mx-auto px-4 py-16">
+    <div ref={vantaRef} className="min-h-screen w-full overflow-x-hidden">
+      <div className="relative z-10 max-w-4xl mx-auto px-4 py-16 min-h-screen">
         <div className="bg-white bg-opacity-10 backdrop-blur-md rounded-xl p-6 space-y-6 mb-20"> {/* Added mb-20 */}
 
           <h1 className="text-4xl font-bold text-white text-center mb-8">
@@ -146,7 +152,7 @@ const Images = () => {
 
 
             {/* Add SEM illustration */}
-            <div className="flex justify-center mt-8">
+            <div className="flex flex-col items-center mt-8">
               <img
                 src="/SEM_Bee.gif"
                 alt="SEM Working Principle"
