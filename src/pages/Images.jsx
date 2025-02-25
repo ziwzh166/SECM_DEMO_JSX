@@ -9,10 +9,10 @@ const Images = () => {
   const resizeTimeoutRef = useRef(null); // Add this line
   useEffect(() => {
     let effect = null;
-    
+
     const initVanta = () => {
       if (!vantaRef.current || !THREE) return;
-  
+
       effect = TOPOLOGY({
         el: vantaRef.current,
         p5: p5,
@@ -29,13 +29,13 @@ const Images = () => {
         size: 1.2,
         spacing: 15
       });
-  
+
       // Force initial resize
       setTimeout(() => effect?.resize(), 100);
-      
+
       setVantaEffect(effect);
     };
-  
+
     // Enhanced resize handler
     const handleResize = () => {
       if (resizeTimeoutRef.current) clearTimeout(resizeTimeoutRef.current);
@@ -47,10 +47,10 @@ const Images = () => {
         }
       }, 150);
     };
-  
+
     window.addEventListener('resize', handleResize);
     const timer = setTimeout(initVanta, 100);
-  
+
     return () => {
       window.removeEventListener('resize', handleResize);
       clearTimeout(timer);
@@ -112,18 +112,21 @@ const Images = () => {
     <section className='w-full min-h-screen relative overflow-hidden'>
       {/* Vanta Background - Match Home page styling */}
       <div
-      ref={vantaRef}
-      className="fixed inset-0 z-0"
-      style={{
-        width: '100vw',
-        height: '100vh',
-        transform: 'translate3d(0,0,0)', // Force hardware acceleration
-        background: '#091149', 
-      }}
-    />
+        ref={vantaRef}
+        className="fixed inset-0 z-0"
+        style={{
+          width: '100vw',
+          height: '100vh',
+          // Proper CSS background color
+          backgroundColor: '#091149', // Use # instead of 0x
+          // Fallback if Vanta fails
+          background: 'linear-gradient(#091149, #091149)',
+          transform: 'translate3d(0,0,0)'
+        }}
+      />
 
       <div className="relative">
-      <div className="max-w-4xl mx-auto px-4 py-16">
+        <div className="max-w-4xl mx-auto px-4 py-16">
           <div className="bg-white bg-opacity-10 backdrop-blur-md rounded-xl p-6 space-y-6 mb-20"> {/* Added mb-20 */}
 
             <h1 className="text-4xl font-bold text-white text-center mb-8">
@@ -202,8 +205,8 @@ const Images = () => {
           </div>
         </div>
       </div>
-       {/* </div> */}
-       </section>
+      {/* </div> */}
+    </section>
   );
 };
 
