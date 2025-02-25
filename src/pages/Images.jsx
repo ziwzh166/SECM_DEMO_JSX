@@ -118,6 +118,7 @@ const Images = () => {
         width: '100vw',
         height: '100vh',
         transform: 'translate3d(0,0,0)', // Force hardware acceleration
+        background: '#091149', 
       }}
     />
 
