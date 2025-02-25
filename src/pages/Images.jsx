@@ -9,74 +9,52 @@ const Images = () => {
   const resizeTimeoutRef = useRef(null); // Add this line
   useEffect(() => {
     let effect = null;
-  const initVanta = async () => {
-    if (!vantaRef.current) return;
-
-    // Explicitly load THREE.js
-    const THREE = await import('three');
-    window.THREE = THREE.default || THREE;
-    try {
+    
+    const initVanta = () => {
+      if (!vantaRef.current || !THREE) return;
+  
       effect = TOPOLOGY({
         el: vantaRef.current,
         p5: p5,
         mouseControls: true,
         touchControls: true,
         gyroControls: false,
-        minHeight: window.innerHeight,
-        minWidth: window.innerWidth,
+        minHeight: null,  // Remove fixed constraints
+        minWidth: null,   // Remove fixed constraints
         scale: 1.00,
         scaleMobile: 1.00,
         color: 0x526681,
-        backgroundColor: 0x091149
+        backgroundColor: 0x091149,
+        // Add responsive parameters
+        size: 1.2,
+        spacing: 15
       });
-        effect = TOPOLOGY({
-          el: vantaRef.current,
-          p5: p5,
-          mouseControls: true,
-          touchControls: true,
-          gyroControls: false,
-          minHeight: window.innerHeight,
-          minWidth: window.innerWidth,
-          scale: 1.00,
-          scaleMobile: 1.00,
-          color: 0x526681,
-          backgroundColor: 0x091149
-        });
-
-        setVantaEffect(effect);
-
-        // Debounced resize handler
-        const handleResize = () => {
-          console.log('Resizing...'); // Add this line
-          if (resizeTimeoutRef.current) {
-            clearTimeout(resizeTimeoutRef.current);
-          }
-        
-          resizeTimeoutRef.current = setTimeout(() => {
-            if (effect) {
-              effect.resize();
-            }
-          }, 100);
-        };
-
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-      } catch (error) {
-        console.error('Vanta initialization error:', error);
-      }
+  
+      // Force initial resize
+      setTimeout(() => effect?.resize(), 100);
+      
+      setVantaEffect(effect);
     };
-
-    // Delay initialization to ensure DOM is ready
+  
+    // Enhanced resize handler
+    const handleResize = () => {
+      if (resizeTimeoutRef.current) clearTimeout(resizeTimeoutRef.current);
+      resizeTimeoutRef.current = setTimeout(() => {
+        if (effect) {
+          effect.renderer.setSize(window.innerWidth, window.innerHeight);
+          effect.resize();
+          effect.needsUpdate = true;
+        }
+      }, 150);
+    };
+  
+    window.addEventListener('resize', handleResize);
     const timer = setTimeout(initVanta, 100);
-
+  
     return () => {
+      window.removeEventListener('resize', handleResize);
       clearTimeout(timer);
-      if (resizeTimeoutRef.current) {
-        clearTimeout(resizeTimeoutRef.current);
-      }
-      if (effect) {
-        effect.destroy();
-      }
+      if (effect) effect.destroy();
     };
   }, []);
 
@@ -131,16 +109,17 @@ const Images = () => {
   };
 
   return (
-    <section className='w-full min-h-screen relative'>
+    <section className='w-full min-h-screen relative overflow-hidden'>
       {/* Vanta Background - Match Home page styling */}
       <div
-        ref={vantaRef}
-        className="fixed inset-0 z-0"
-        style={{
-          width: '100vw',
-          height: '100vh'
-        }}
-      />
+      ref={vantaRef}
+      className="fixed inset-0 z-0"
+      style={{
+        width: '100vw',
+        height: '100vh',
+        transform: 'translate3d(0,0,0)', // Force hardware acceleration
+      }}
+    />
 
       <div className="relative">
       <div className="max-w-4xl mx-auto px-4 py-16">
