@@ -8,25 +8,26 @@ const Images = () => {
   const vantaRef = useRef(null);
 
   useEffect(() => {
-    let effect = null;
-    const initVanta = () => {
-      if (!vantaRef.current) return;
+    // Wait for VANTA and p5 dependencies
+    const loadVanta = async () => {
       try {
-        effect = TOPOLOGY({
+        if (!vantaRef.current || vantaEffect) return;
+        
+        const effect = TOPOLOGY({
           el: vantaRef.current,
           p5,
           mouseControls: true,
           touchControls: true,
           gyroControls: false,
-          // Let Vanta size dynamically:
-          minHeight: 0,
-          minWidth: 0,
+          minHeight: window.innerHeight,
+          minWidth: window.innerWidth,
           scale: 1.0,
           color: 0x526681,
           backgroundColor: 0x091149
         });
+
         setVantaEffect(effect);
-      } catch { }
+      } catch {}
     };
     initVanta();
     return () => {
@@ -85,7 +86,11 @@ const Images = () => {
   };
 
   return (
-    <div ref={vantaRef} className="w-full min-h-screen relative">
+    <div 
+      ref={vantaRef} 
+      className=" inset-0 w-full min-h-screen overflow-auto"
+    >
+      
       <div className="relative z-10 max-w-4xl mx-auto px-4 py-16">
         <div className="bg-white bg-opacity-10 backdrop-blur-md rounded-xl p-6 space-y-6 mb-20"> {/* Added mb-20 */}
 
@@ -141,7 +146,7 @@ const Images = () => {
 
 
             {/* Add SEM illustration */}
-            <div className="flex flex-col items-center mt-8">
+            <div className="flex justify-center mt-8">
               <img
                 src="/SEM_Bee.gif"
                 alt="SEM Working Principle"
